@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OASER Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; background: #F0F2F5; color: #2C3E50; padding: 28px 24px; }
+.page { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+.header { background: #1E3A5F; border-radius: 14px; padding: 18px 28px 0 28px; }
+.h-top { display: flex; align-items: center; justify-content: space-between; padding-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.h-title { font-size: 22px; font-weight: 600; color: #fff; }
+.h-sub { font-size: 12px; color: #A8C4D8; margin-top: 4px; }
+.h-rates { background: rgba(255,255,255,0.07); border-radius: 10px 10px 0 0; margin: 0 -28px; padding: 14px 28px; display: flex; }
+.rate-cell { flex: 1; text-align: center; border-right: 1px solid rgba(255,255,255,0.1); padding: 0 20px; }
+.rate-cell:last-child { border-right: none; }
+.rate-lbl { font-size: 11px; color: #7A9BB5; margin-bottom: 4px; }
+.rate-val { font-size: 26px; font-weight: 600; color: #fff; }
+.rate-val.teal { color: #5DCAA5; }
+.ph { font-size: 10px; color: #F7931A; margin-top: 2px; }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.card { background: #fff; border: 1px solid #E2E8F0; border-radius: 12px; padding: 18px 20px; }
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+.card-name { font-size: 15px; font-weight: 600; color: #1E3A5F; }
+.card-sub { font-size: 11px; color: #8898AA; margin-top: 2px; }
+.badge { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; background: #D5EDD8; color: #1A6B4A; white-space: nowrap; }
+.collat-num { font-size: 36px; font-weight: 600; color: #1E3A5F; line-height: 1; }
+.hc-sub { font-size: 13px; color: #8898AA; margin-top: 4px; }
+.reset-ts { font-size: 11px; color: #B0BEC5; margin-top: 12px; border-top: 1px solid #F0F4F8; padding-top: 10px; }
+.explorer { background: #fff; border: 1px solid #E2E8F0; border-radius: 12px; padding: 22px 26px; }
+.exp-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.exp-title { font-size: 16px; font-weight: 600; color: #1E3A5F; }
+.exp-sub { font-size: 12px; color: #8898AA; margin-top: 4px; max-width: 560px; line-height: 1.6; }
+.result-box { text-align: right; min-width: 160px; }
+.result-label { font-size: 12px; color: #8898AA; margin-bottom: 3px; }
+.result-spread { font-size: 32px; font-weight: 600; }
+.result-spread.zero { color: #1A6B4A; }
+.result-spread.pos  { color: #C0392B; }
+.result-spread.neg  { color: #0B7285; }
+.credit-warn { font-size: 12px; color: #C0392B; margin-top: 4px; display: none; text-align: right; }
+.slider-block { margin-bottom: 20px; }
+.slider-block:last-child { margin-bottom: 0; }
+.slider-row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.slider-name { font-size: 13px; font-weight: 500; color: #2C3E50; }
+.slider-readout { font-size: 13px; color: #1E3A5F; font-weight: 600; }
+.fixed-note { font-size: 12px; color: #B0BEC5; font-style: italic; }
+.slider-sub { display: flex; justify-content: space-between; font-size: 11px; color: #B0BEC5; margin-top: 4px; }
+.pub-marker { font-size: 11px; color: #0B7285; font-weight: 500; }
+input[type=range] { width: 100%; height: 6px; -webkit-appearance: none; appearance: none; background: #E2E8F0; border-radius: 3px; outline: none; cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #1E3A5F; cursor: pointer; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+input[type=range]::-webkit-slider-thumb:hover { background: #0B7285; }
+.reset-btn { font-size: 11px; padding: 3px 12px; border-radius: 20px; border: 1px solid #CBD5E0; background: #F5F7FA; color: #2C3E50; cursor: pointer; margin-left: 8px; }
+.reset-btn:hover { background: #1E3A5F; color: #fff; border-color: #1E3A5F; }
+.chart-panel { background: #fff; border: 1px solid #E2E8F0; border-radius: 12px; padding: 22px 26px; }
+.chart-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+.chart-title { font-size: 16px; font-weight: 600; color: #1E3A5F; }
+.chart-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.toggles { display: flex; gap: 6px; flex-wrap: wrap; }
+.tog { font-size: 12px; padding: 5px 14px; border-radius: 20px; border: 1px solid #CBD5E0; background: #F5F7FA; color: #6C757D; cursor: pointer; transition: all .15s; }
+.tog.on.teal { background: #0B7285; color: #fff; border-color: #0B7285; }
+.tog.on.gold { background: #B07D12; color: #fff; border-color: #B07D12; }
+.tog.on.btc  { background: #F7931A; color: #fff; border-color: #F7931A; }
+.tog.on.navy { background: #1E3A5F; color: #fff; border-color: #1E3A5F; }
+.dl-btn { font-size: 12px; padding: 5px 16px; border-radius: 20px; border: 1px solid #CBD5E0; background: #F5F7FA; color: #1E3A5F; cursor: pointer; font-weight: 500; }
+.dl-btn:hover { background: #1E3A5F; color: #fff; }
+.zoom-row { display: flex; gap: 6px; align-items: center; margin-bottom: 14px; }
+.zoom-lbl { font-size: 12px; color: #8898AA; margin-right: 4px; }
+.zoom-btn { font-size: 11px; padding: 3px 12px; border-radius: 20px; border: 1px solid #CBD5E0; background: #F5F7FA; color: #6C757D; cursor: pointer; }
+.zoom-btn.active { background: #1E3A5F; color: #fff; border-color: #1E3A5F; }
+.chart-wrap { position: relative; }
+canvas { width: 100% !important; height: 280px !important; }
+/* Axis average dots */
+.avg-dots { position: absolute; right: 0; top: 0; height: 280px; pointer-events: none; width: 60px; }
+.avg-dot { position: absolute; right: -7px; width: 14px; height: 14px; border-radius: 50%; transform: translateY(-50%); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+.avg-dot-left { position: absolute; left: -7px; width: 14px; height: 14px; border-radius: 50%; transform: translateY(-50%); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+.avg-label { position: absolute; right: 20px; font-size: 10px; font-weight: 500; transform: translateY(-50%); white-space: nowrap; }
+.avg-label-left { position: absolute; left: 12px; font-size: 10px; font-weight: 500; transform: translateY(-50%); white-space: nowrap; }
+.chart-note { font-size: 11px; color: #B0BEC5; margin-top: 10px; }
+.footer { text-align: center; font-size: 11px; color: #B0BEC5; padding: 8px 0; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="header">
+  <div class="h-top">
+    <div>
+      <div class="h-title">OASER Dashboard</div>
+      <div class="h-sub">Onchain Abu Dhabi Secured Earnings Rate · near risk-free overnight benchmark for USD lending · anchored to SOFR · collateral resets every 2 hours</div>
+    </div>
+  </div>
+  <div class="h-rates">
+    <div class="rate-cell">
+      <div class="rate-lbl">SOFR · latest</div>
+      <div class="rate-val">4.33%</div>
+      <div class="ph">★ placeholder</div>
+    </div>
+    <div class="rate-cell">
+      <div class="rate-lbl">OASER · latest</div>
+      <div class="rate-val teal">4.33%</div>
+      <div class="ph">★ placeholder</div>
+    </div>
+    <div class="rate-cell">
+      <div class="rate-lbl">OASER vs SOFR</div>
+      <div class="rate-val teal">+0 bps</div>
+      <div class="ph">★ placeholder</div>
+    </div>
+  </div>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="card-top">
+      <div><div class="card-name">Cash equivalents</div><div class="card-sub">Stablecoin + T-bills · fixed</div></div>
+      <div class="badge">Live</div>
+    </div>
+    <div class="collat-num">100.1%</div>
+    <div class="hc-sub">Haircut: 0.10%</div>
+    <div class="reset-ts">★ placeholder · last reset: 14:00 UTC</div>
+  </div>
+  <div class="card">
+    <div class="card-top">
+      <div><div class="card-name">Gold</div><div class="card-sub">GARCH engine · 2-hour reset</div></div>
+      <div class="badge">Live</div>
+    </div>
+    <div class="collat-num">106.5%</div>
+    <div class="hc-sub">Haircut: 6.1%</div>
+    <div class="reset-ts">★ placeholder · last reset: 14:00 UTC</div>
+  </div>
+  <div class="card">
+    <div class="card-top">
+      <div><div class="card-name">Bitcoin</div><div class="card-sub">GARCH engine · 2-hour reset</div></div>
+      <div class="badge">Live</div>
+    </div>
+    <div class="collat-num">109.8%</div>
+    <div class="hc-sub">Haircut: 8.9%</div>
+    <div class="reset-ts">★ placeholder · last reset: 14:00 UTC</div>
+  </div>
+</div>
+
+<div class="explorer">
+  <div class="exp-top">
+    <div>
+      <div class="exp-title">Risk-neutral rate explorer</div>
+      <div class="exp-sub">Adjust collateralisation above or below the published level. At the published level: OASER (near risk-free). Below: a model-based credit premium applies. Above: rate moves below OASER toward SOFR. Range reflects market trading beyond OASER floor and ceiling.</div>
+    </div>
+    <div class="result-box">
+      <div class="result-label">OASER</div>
+      <div class="result-spread zero" id="spread-display">+ 0 bps</div>
+      <div class="credit-warn" id="credit-warn">Model-based credit premium — no longer near risk-free</div>
+    </div>
+  </div>
+  <div class="slider-block">
+    <div class="slider-row-top">
+      <div class="slider-name">Cash equivalents</div>
+      <div class="fixed-note">Fixed · no adjustment</div>
+    </div>
+  </div>
+  <div class="slider-block">
+    <div class="slider-row-top">
+      <div class="slider-name">Gold — collateralisation <button class="reset-btn" onclick="resetSlider('gold')">Reset</button></div>
+      <div class="slider-readout" id="gold-rdout">106.5% (haircut 6.1%)</div>
+    </div>
+    <input type="range" min="50" max="200" step="0.1" value="106.5" id="gold-slider">
+    <div class="slider-sub">
+      <span>50% · min</span>
+      <span class="pub-marker">▲ Published: 106.5%</span>
+      <span>200% · max</span>
+    </div>
+  </div>
+  <div class="slider-block">
+    <div class="slider-row-top">
+      <div class="slider-name">Bitcoin — collateralisation <button class="reset-btn" onclick="resetSlider('btc')">Reset</button></div>
+      <div class="slider-readout" id="btc-rdout">109.8% (haircut 8.9%)</div>
+    </div>
+    <input type="range" min="50" max="200" step="0.1" value="109.8" id="btc-slider">
+    <div class="slider-sub">
+      <span>50% · min</span>
+      <span class="pub-marker">▲ Published: 109.8%</span>
+      <span>200% · max</span>
+    </div>
+  </div>
+</div>
+
+<div class="chart-panel">
+  <div class="chart-top">
+    <div class="chart-title">Historical basket risk premium &amp; haircuts · Jan 2015 – Apr 2026</div>
+    <div class="chart-controls">
+      <div class="toggles">
+        <button class="tog teal on" id="tog-premium" onclick="toggle('premium')">Basket premium (left)</button>
+        <button class="tog gold on"  id="tog-gold"    onclick="toggle('gold')">Gold haircut (right)</button>
+        <button class="tog btc on"   id="tog-btc"     onclick="toggle('btc')">Bitcoin haircut (right)</button>
+      </div>
+      <button class="dl-btn" onclick="downloadCSV()">↓ Download data</button>
+    </div>
+  </div>
+  <div class="zoom-row">
+    <span class="zoom-lbl">Window:</span>
+    <button class="zoom-btn" onclick="setZoom(12)">1yr</button>
+    <button class="zoom-btn" onclick="setZoom(36)">3yr</button>
+    <button class="zoom-btn" onclick="setZoom(60)">5yr</button>
+    <button class="zoom-btn active" id="zoom-all" onclick="setZoom(0)">All</button>
+  </div>
+  <div class="chart-wrap" style="position:relative;">
+    <canvas id="myChart"></canvas>
+    <div id="avg-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></div>
+  </div>
+  <div class="chart-note">
+    Basket premium and haircuts: OASER backtest engine, real market data, GARCH methodology, monthly averages.
+    Dots on axes show sample averages (Jan 2015 – Apr 2026). ★ Live data feed pending.
+  </div>
+</div>
+
+<div class="footer">OASER · oaser.org · Dashboard v1 · ★ Placeholder live rates — historical series real · For consortium review</div>
+</div>
+
+<script>
+const GOLD_COL0 = 106.5, BTC_COL0 = 109.8;
+const gSlider = document.getElementById('gold-slider');
+const bSlider = document.getElementById('btc-slider');
+
+function hcFromCol(col) { return col <= 0 ? 0 : ((1 - 100/col)*100); }
+
+function update() {
+  const gc = parseFloat(gSlider.value), bc = parseFloat(bSlider.value);
+  const ghc = hcFromCol(gc), bhc = hcFromCol(bc);
+  document.getElementById('gold-rdout').textContent = gc.toFixed(1)+'% (haircut '+ghc.toFixed(1)+'%)';
+  document.getElementById('btc-rdout').textContent  = bc.toFixed(1)+'% (haircut '+bhc.toFixed(1)+'%)';
+  const spread = Math.round(((hcFromCol(GOLD_COL0)-ghc)+(hcFromCol(BTC_COL0)-bhc))/2*10);
+  const sd = document.getElementById('spread-display');
+  sd.textContent = (spread>=0?'+ ':'– ')+Math.abs(spread)+' bps';
+  sd.className = 'result-spread '+(spread===0?'zero':spread>0?'pos':'neg');
+  document.getElementById('credit-warn').style.display = spread>0?'block':'none';
+}
+function resetSlider(id) {
+  if(id==='gold') gSlider.value=GOLD_COL0; else bSlider.value=BTC_COL0;
+  update();
+}
+gSlider.addEventListener('input', update);
+bSlider.addEventListener('input', update);
+
+const allLabels  = ["2015-01", "2015-02", "2015-03", "2015-04", "2015-05", "2015-06", "2015-07", "2015-08", "2015-09", "2015-10", "2015-11", "2015-12", "2016-01", "2016-02", "2016-03", "2016-04", "2016-05", "2016-06", "2016-07", "2016-08", "2016-09", "2016-10", "2016-11", "2016-12", "2017-01", "2017-02", "2017-03", "2017-04", "2017-05", "2017-06", "2017-07", "2017-08", "2017-09", "2017-10", "2017-11", "2017-12", "2018-01", "2018-02", "2018-03", "2018-04", "2018-05", "2018-06", "2018-07", "2018-08", "2018-09", "2018-10", "2018-11", "2018-12", "2019-01", "2019-02", "2019-03", "2019-04", "2019-05", "2019-06", "2019-07", "2019-08", "2019-09", "2019-10", "2019-11", "2019-12", "2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04"];
+const allPremium = [768.6, 766.6, 780.2, 817.7, 673.1, 884.5, 756.0, 538.3, 582.1, 741.5, 706.2, 939.0, 939.4, 747.6, 860.0, 996.1, 861.0, 768.2, 717.3, 819.1, 918.5, 906.1, 727.3, 654.7, 889.6, 852.1, 754.0, 730.7, 751.9, 812.8, 719.3, 741.4, 982.0, 887.4, 805.7, 594.4, 659.3, 797.8, 800.7, 825.0, 879.5, 927.5, 662.1, 680.7, 654.9, 898.8, 838.4, 923.5, 745.2, 682.1, 626.7, 585.8, 749.9, 801.9, 818.1, 939.0, 909.1, 851.6, 737.9, 646.5, 677.1, 734.3, 1071.8, 1011.1, 741.4, 826.8, 789.3, 718.2, 770.1, 792.9, 575.6, 965.6, 853.8, 739.5, 860.4, 972.0, 983.8, 804.3, 778.3, 901.7, 949.7, 836.2, 797.9, 938.0, 811.5, 761.8, 716.8, 784.4, 657.9, 634.5, 608.7, 844.5, 632.3, 693.2, 816.4, 1015.2, 942.7, 833.2, 846.4, 864.9, 745.2, 783.9, 795.4, 946.1, 745.0, 840.1, 739.4, 640.5, 955.9, 821.7, 838.9, 864.3, 993.9, 697.9, 669.4, 931.6, 766.2, 711.5, 723.9, 639.3, 645.3, 823.9, 724.9, 899.6, 874.1, 697.8, 773.2, 833.9, 959.5, 923.0, 929.4, 970.3, 753.5, 620.5, 634.2, 710.4];
+const allGold    = [7.49, 7.72, 7.73, 7.37, 8.29, 7.48, 10.17, 5.9, 5.08, 6.62, 6.47, 5.54, 7.13, 6.58, 8.41, 8.38, 7.01, 9.16, 9.65, 10.01, 8.21, 5.51, 7.08, 6.52, 8.58, 5.45, 5.07, 5.32, 5.85, 8.07, 10.13, 8.87, 8.97, 9.69, 9.75, 7.66, 6.36, 6.72, 5.36, 6.07, 6.72, 7.59, 7.03, 8.92, 8.79, 6.68, 9.12, 9.68, 7.26, 8.44, 6.5, 5.51, 5.57, 6.68, 7.77, 7.98, 5.05, 4.99, 5.93, 5.14, 7.8, 9.17, 10.25, 9.92, 7.89, 8.08, 6.83, 8.24, 9.1, 5.87, 6.32, 9.29, 6.56, 5.76, 7.87, 7.91, 8.01, 9.19, 7.44, 9.05, 8.5, 8.73, 8.49, 9.68, 9.01, 9.48, 5.59, 6.47, 5.8, 6.2, 6.34, 9.4, 6.37, 6.31, 5.86, 7.3, 9.74, 9.85, 9.91, 10.12, 6.12, 5.71, 8.75, 6.73, 6.51, 5.96, 5.95, 7.74, 7.78, 5.92, 7.23, 8.67, 9.02, 9.91, 7.26, 7.69, 10.18, 9.74, 7.26, 8.02, 8.31, 8.01, 6.57, 9.77, 6.54, 4.84, 5.88, 5.84, 5.68, 6.32, 5.55, 7.29, 5.83, 4.76, 5.81, 8.74];
+const allBtc     = [23.24, 22.93, 23.46, 25.31, 18.73, 27.89, 19.9, 15.5, 18.19, 23.06, 21.77, 31.9, 30.42, 23.17, 25.96, 31.41, 27.39, 21.65, 19.0, 22.69, 28.48, 30.71, 22.0, 19.48, 26.86, 28.65, 25.07, 23.82, 24.31, 24.35, 18.59, 20.83, 30.4, 25.8, 22.61, 16.03, 19.88, 25.21, 26.65, 26.83, 28.54, 29.6, 19.47, 18.38, 17.39, 29.14, 24.35, 27.17, 22.38, 18.82, 18.62, 18.04, 24.39, 25.29, 24.93, 29.55, 31.37, 29.09, 23.59, 20.72, 19.37, 20.18, 32.42, 30.4, 21.86, 25.1, 24.83, 20.58, 21.83, 25.97, 16.82, 29.47, 27.72, 23.82, 26.56, 31.04, 31.29, 22.87, 23.57, 26.91, 29.52, 24.67, 23.3, 27.75, 23.46, 21.07, 23.18, 24.78, 20.35, 19.0, 17.85, 24.17, 18.84, 21.2, 26.68, 33.24, 27.95, 23.5, 24.03, 24.56, 23.78, 25.74, 23.11, 31.17, 23.39, 27.59, 23.59, 17.74, 30.56, 26.98, 26.37, 25.84, 30.64, 17.99, 19.49, 29.56, 20.43, 18.54, 21.62, 17.45, 17.4, 25.0, 22.53, 26.27, 28.35, 23.05, 25.09, 27.54, 32.73, 30.65, 31.72, 31.48, 24.29, 19.88, 19.51, 19.56];
+const csvData    = "date,sofr_pct,basket_premium_bps,gold_haircut_pct,btc_haircut_pct\n2015-01,0.1181,768.6,7.49,23.24\n2015-02,0.114,766.6,7.72,22.93\n2015-03,0.1172,780.2,7.73,23.46\n2015-04,0.1213,817.7,7.37,25.31\n2015-05,0.1167,673.1,8.29,18.73\n2015-06,0.1243,884.5,7.48,27.89\n2015-07,0.1168,756.0,10.17,19.9\n2015-08,0.1227,538.3,5.9,15.5\n2015-09,0.1222,582.1,5.08,18.19\n2015-10,0.1279,741.5,6.62,23.06\n2015-11,0.1174,706.2,6.47,21.77\n2015-12,0.2421,939.0,5.54,31.9\n2016-01,0.3635,939.4,7.13,30.42\n2016-02,0.3717,747.6,6.58,23.17\n2016-03,0.3768,860.0,8.41,25.96\n2016-04,0.369,996.1,8.38,31.41\n2016-05,0.3698,861.0,7.01,27.39\n2016-06,0.3736,768.2,9.16,21.65\n2016-07,0.3698,717.3,9.65,19.0\n2016-08,0.3734,819.1,10.01,22.69\n2016-09,0.3651,918.5,8.21,28.48\n2016-10,0.3679,906.1,5.51,30.71\n2016-11,0.3712,727.3,7.08,22.0\n2016-12,0.5238,654.7,6.52,19.48\n2017-01,0.6529,889.6,8.58,26.86\n2017-02,0.6619,852.1,5.45,28.65\n2017-03,0.79,754.0,5.07,25.07\n2017-04,0.9126,730.7,5.32,23.82\n2017-05,0.9139,751.9,5.85,24.31\n2017-06,1.0415,812.8,8.07,24.35\n2017-07,1.159,719.3,10.13,18.59\n2017-08,1.1604,741.4,8.87,20.83\n2017-09,1.1582,982.0,8.97,30.4\n2017-10,1.1578,887.4,9.69,25.8\n2017-11,1.1565,805.7,9.75,22.61\n2017-12,1.3085,594.4,7.66,16.03\n2018-01,1.4111,659.3,6.36,19.88\n2018-02,1.415,797.8,6.72,25.21\n2018-03,1.5049,800.7,5.36,26.65\n2018-04,1.7127,825.0,6.07,26.83\n2018-05,1.7183,879.5,6.72,28.54\n2018-06,1.8389,927.5,7.59,29.6\n2018-07,1.9228,662.1,7.03,19.47\n2018-08,1.9177,680.7,8.92,18.38\n2018-09,1.949,654.9,8.79,17.39\n2018-10,2.176,898.8,6.68,29.14\n2018-11,2.1889,838.4,9.12,24.35\n2018-12,2.2671,923.5,9.68,27.17\n2019-01,2.4011,745.2,7.26,22.38\n2019-02,2.4001,682.1,8.44,18.82\n2019-03,2.4019,626.7,6.5,18.62\n2019-04,2.4074,585.8,5.51,18.04\n2019-05,2.4028,749.9,5.57,24.39\n2019-06,2.4051,801.9,6.68,25.29\n2019-07,2.394,818.1,7.77,24.93\n2019-08,2.1296,939.0,7.98,29.55\n2019-09,2.0414,909.1,5.05,31.37\n2019-10,1.866,851.6,4.99,29.09\n2019-11,1.6327,737.9,5.93,23.59\n2019-12,1.6299,646.5,5.14,20.72\n2020-01,1.629,677.1,7.8,19.37\n2020-02,1.6323,734.3,9.17,20.18\n2020-03,0.5666,1071.8,10.25,32.42\n2020-04,0.0545,1011.1,9.92,30.4\n2020-05,0.0523,741.4,7.89,21.86\n2020-06,0.0551,826.8,8.08,25.1\n2020-07,0.0566,789.3,6.83,24.83\n2020-08,0.0521,718.2,8.24,20.58\n2020-09,0.0572,770.1,9.1,21.83\n2020-10,0.0524,792.9,5.87,25.97\n2020-11,0.0471,575.6,6.32,16.82\n2020-12,0.0506,965.6,9.29,29.47\n2021-01,0.0468,853.8,6.56,27.72\n2021-02,0.0446,739.5,5.76,23.82\n2021-03,0.056,860.4,7.87,26.56\n2021-04,0.0563,972.0,7.91,31.04\n2021-05,0.0509,983.8,8.01,31.29\n2021-06,0.0523,804.3,9.19,22.87\n2021-07,0.0541,778.3,7.44,23.57\n2021-08,0.0511,901.7,9.05,26.91\n2021-09,0.0567,949.7,8.5,29.52\n2021-10,0.0486,836.2,8.73,24.67\n2021-11,0.0479,797.9,8.49,23.3\n2021-12,0.043,938.0,9.68,27.75\n2022-01,0.0489,811.5,9.01,23.46\n2022-02,0.0538,761.8,9.48,21.07\n2022-03,0.1825,716.8,5.59,23.18\n2022-04,0.3313,784.4,6.47,24.78\n2022-05,0.7592,657.9,5.8,20.35\n2022-06,1.2066,634.5,6.2,19.0\n2022-07,1.6556,608.7,6.34,17.85\n2022-08,2.3351,844.5,9.4,24.17\n2022-09,2.5597,632.3,6.37,18.84\n2022-10,3.0818,693.2,6.31,21.2\n2022-11,3.7604,816.4,5.86,26.68\n2022-12,4.1003,1015.2,7.3,33.24\n2023-01,4.3302,942.7,9.74,27.95\n2023-02,4.5658,833.2,9.85,23.5\n2023-03,4.655,846.4,9.91,24.03\n2023-04,4.8317,864.9,10.12,24.56\n2023-05,5.047,745.2,6.12,23.78\n2023-06,5.0813,783.9,5.71,25.74\n2023-07,5.1158,795.4,8.75,23.11\n2023-08,5.328,946.1,6.73,31.17\n2023-09,5.327,745.0,6.51,23.39\n2023-10,5.3329,840.1,5.96,27.59\n2023-11,5.3413,739.4,5.95,23.59\n2023-12,5.3299,640.5,7.74,17.74\n2024-01,5.3253,955.9,7.78,30.56\n2024-02,5.3303,821.7,5.92,26.98\n2024-03,5.3239,838.9,7.23,26.37\n2024-04,5.3323,864.3,8.67,25.84\n2024-05,5.329,993.9,9.02,30.64\n2024-06,5.3345,697.9,9.91,17.99\n2024-07,5.3308,669.4,7.26,19.49\n2024-08,5.3291,931.6,7.69,29.56\n2024-09,5.143,766.2,10.18,20.43\n2024-10,4.8283,711.5,9.74,18.54\n2024-11,4.6338,723.9,7.26,21.62\n2024-12,4.4692,639.3,8.02,17.45\n2025-01,4.337,645.3,8.31,17.4\n2025-02,4.3307,823.9,8.01,25.0\n2025-03,4.3311,724.9,6.57,22.53\n2025-04,4.3261,899.6,9.77,26.27\n2025-05,4.338,874.1,6.54,28.35\n2025-06,4.3393,697.8,4.84,23.05\n2025-07,4.3316,773.2,5.88,25.09\n2025-08,4.3283,833.9,5.84,27.54\n2025-09,4.3243,959.5,5.68,32.73\n2025-10,4.33,923.0,6.32,30.65\n2025-11,4.3337,929.4,5.55,31.72\n2025-12,4.3269,970.3,7.29,31.48\n2026-01,4.3202,753.5,5.83,24.29\n2026-02,4.3302,620.5,4.76,19.88\n2026-03,4.3365,634.2,5.81,19.51\n2026-04,4.329,710.4,8.74,19.56";
+const avgPremium = 795.7;
+const avgGold    = 7.47;
+const avgBtc     = 24.33;
+
+const vis = {premium:true, gold:true, btc:true};
+let chart, zoomMonths = 0;
+
+function getSlice(arr) { return zoomMonths ? arr.slice(-zoomMonths) : arr; }
+
+function buildChart() {
+  if (chart) chart.destroy();
+  const labels  = getSlice(allLabels);
+  const premium = getSlice(allPremium);
+  const gold    = getSlice(allGold);
+  const btc     = getSlice(allBtc);
+
+  chart = new Chart(document.getElementById('myChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Basket premium (bps)',
+          data: premium, yAxisID: 'y',
+          borderColor: '#0B7285', backgroundColor: 'rgba(11,114,133,0.07)',
+          borderWidth: 2.5, pointRadius: 2, tension: 0.3, fill: true,
+          hidden: !vis.premium
+        },
+        {
+          label: 'Gold haircut (%)',
+          data: gold, yAxisID: 'y2',
+          borderColor: '#B07D12', backgroundColor: 'transparent',
+          borderWidth: 1.8, pointRadius: 2, tension: 0.3, borderDash: [5,4],
+          hidden: !vis.gold
+        },
+        {
+          label: 'Bitcoin haircut (%)',
+          data: btc, yAxisID: 'y2',
+          borderColor: '#F7931A', backgroundColor: 'transparent',
+          borderWidth: 1.8, pointRadius: 2, tension: 0.3, borderDash: [5,4],
+          hidden: !vis.btc
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: {mode:'index', intersect:false},
+      plugins: {
+        legend: {display: false},
+        tooltip: {callbacks: {label: c => {
+          if (c.dataset.yAxisID === 'y')  return ' ' + c.parsed.y.toFixed(0) + ' bps';
+          return ' ' + c.parsed.y.toFixed(2) + '%';
+        }}}
+      },
+      scales: {
+        x: {
+          grid: {color:'rgba(0,0,0,0.04)'},
+          ticks: {color:'#8898AA', font:{size:11}, maxTicksLimit:14}
+        },
+        y: {
+          position: 'left',
+          grid: {color:'rgba(0,0,0,0.04)'},
+          ticks: {color:'#0B7285', font:{size:11}, callback: v => v + ' bps'},
+          title: {display:true, text:'Basis points', color:'#0B7285', font:{size:11}}
+        },
+        y2: {
+          position: 'right',
+          grid: {display: false},
+          ticks: {color:'#B07D12', font:{size:11}, callback: v => v + '%'},
+          title: {display:true, text:'Haircut (%)', color:'#B07D12', font:{size:11}}
+        }
+      }
+    }
+  });
+  setTimeout(drawAvgDots, 80);
+}
+
+function drawAvgDots() {
+  const overlay = document.getElementById('avg-overlay');
+  overlay.innerHTML = '';
+  if (!chart) return;
+  const ca = chart.chartArea;
+  const h  = ca.bottom - ca.top;
+
+  function toY(scale, val) {
+    return ca.top + h * (1 - (val - scale.min) / (scale.max - scale.min));
+  }
+
+  const yScale  = chart.scales['y'];
+  const y2Scale = chart.scales['y2'];
+
+  // Left axis: basket premium
+  if (vis.premium && yScale) {
+    const yPx = toY(yScale, avgPremium);
+    if (yPx >= ca.top && yPx <= ca.bottom) {
+      const dot = document.createElement('div');
+      dot.style.cssText = `position:absolute;left:${ca.left - 10}px;top:${yPx}px;
+        width:14px;height:14px;border-radius:50%;background:#0B7285;
+        transform:translateY(-50%);border:2px solid #fff;
+        box-shadow:0 1px 4px rgba(0,0,0,0.35);`;
+      overlay.appendChild(dot);
+    }
+  }
+
+  // Right axis: gold and bitcoin
+  [{val:avgGold, color:'#B07D12', show:vis.gold},
+   {val:avgBtc,  color:'#F7931A', show:vis.btc}].forEach(cfg => {
+    if (!cfg.show || !y2Scale) return;
+    const yPx = toY(y2Scale, cfg.val);
+    if (yPx >= ca.top && yPx <= ca.bottom) {
+      const dot = document.createElement('div');
+      dot.style.cssText = `position:absolute;left:${ca.right - 4}px;top:${yPx}px;
+        width:14px;height:14px;border-radius:50%;background:${cfg.color};
+        transform:translateY(-50%);border:2px solid #fff;
+        box-shadow:0 1px 4px rgba(0,0,0,0.35);`;
+      overlay.appendChild(dot);
+    }
+  });
+}
+
+function toggle(id) {
+  vis[id] = !vis[id];
+  const cls = {premium:'teal', gold:'gold', btc:'btc'};
+  const btn = document.getElementById('tog-' + id);
+  if (vis[id]) btn.classList.add('on', cls[id]);
+  else btn.classList.remove('on', 'teal', 'gold', 'btc');
+  buildChart();
+}
+
+function setZoom(months) {
+  zoomMonths = months;
+  document.querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active'));
+  if (!months) document.getElementById('zoom-all').classList.add('active');
+  else document.querySelectorAll('.zoom-btn').forEach(b => {
+    if (b.textContent === months/12 + 'yr') b.classList.add('active');
+  });
+  buildChart();
+}
+
+function downloadCSV() {
+  const blob = new Blob([csvData], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'OASER_historical_data.csv';
+  a.click();
+}
+
+buildChart();
+window.addEventListener('resize', buildChart);
+</script>
+</body>
+</html>
